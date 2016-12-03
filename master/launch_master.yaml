@@ -12,7 +12,7 @@
   gather_facts: no
   vars:
     os_flavor: c1.small
-    os_vol_size: 20
+    os_vol_size: 40
     os_network: cysotest1
     os_key: openstack
     os_hostname: retcon.autostatic.cyso.net
@@ -30,6 +30,7 @@
         display_name: "{{ os_hostname }}"
         image: 7050c27f-14ba-4374-9703-e4d61938cde4
         state: present
+        size: "{{ os_vol_size }}"
 
     - name: Launch instance
       os_server:
