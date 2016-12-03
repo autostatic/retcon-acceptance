@@ -1,0 +1,161 @@
+- name: Configure Oramon instances
+  hosts:
+    - micro3.oramon.fuga.cyso.net
+    - micro4.oramon.fuga.cyso.net
+  remote_user: ubuntu
+  gather_facts: yes
+  become: true
+
+#  pre_tasks:
+#  - name: Install Python 2.7
+#    raw: sudo apt-get install -qq python
+#
+  tasks:
+#    - name: Retrieving the Cyso key
+#      apt_key:
+#        url: http://plank.cyso.net/linux/apt.cyso.net.pub.key
+#        state: present
+#      environment:
+#          http_proxy: http://10.181.1.150:8080
+#
+#    - name: Set the ignore valid for the cyso repo
+#      get_url:
+#        url: http://plank.cyso.net/linux/apt.conf.d/00ignorevaliduntil
+#        dest: /etc/apt/apt.conf.d/00ignorevaliduntil
+#        mode: 0644
+#      environment:
+#          http_proxy: http://10.181.1.150:8080
+#
+#    - name: Set the tmp remount for the cyso repo
+#      get_url:
+#        url: http://plank.cyso.net/linux/apt.conf.d/10tmpremount
+#        dest: /etc/apt/apt.conf.d/10tmpremount
+#        mode: 0644
+#      environment:
+#          http_proxy: http://10.181.1.150:8080
+#
+#    - name: Download the xenial cyso mirror
+#      get_url:
+#        url: http://plank.cyso.net/linux/sources.list.d/xenial-cyso-mirror.list
+#        dest: /etc/apt/sources.list.d/xenial-cyso-mirror.list
+#        mode: 0644
+#      environment:
+#          http_proxy: http://10.181.1.150:8080
+#
+#    - name: Download the xenial repo
+#      get_url:
+#        url: http://plank.cyso.net/linux/sources.list.d/xenial-cyso-repo.list
+#        dest: /etc/apt/sources.list.d/xenial-cyso-repo.list
+#        mode: 0644
+#      environment:
+#          http_proxy: http://10.181.1.150:8080
+#
+#    - name: Remove the sources.list
+#      file:
+#        dest: /etc/apt/sources.list
+#        state: absent
+#
+#    - name: Create /etc/apt/apt.conf.d/10proxy
+#      shell: echo 'Acquire::http::Proxy "http://10.181.1.150:8080";' > /etc/apt/apt.conf.d/10proxy
+#
+#    - name: Run apt-get dist-upgrade
+#      apt:
+#        upgrade: dist
+#        update_cache: yes
+#
+#    - name: Create /etc/cyso-extraip.conf
+#      shell: echo "10.181.1.150" > /etc/cyso-extraip.conf
+#
+#    - name: Create /etc/cyso-overrides.conf
+#      shell: echo "gethash=no" > /etc/cyso-overrides.conf
+#
+#    - name: Set full hostname
+#      shell: echo "$(hostname).oramon.fuga.cyso.net" > /etc/hostname
+#
+#    - name: Set full hostname
+#      shell: hostname -F /etc/hostname
+#
+#    - name: Cysofy instance
+#      apt:
+#        name: "{{ item }}"
+#      with_items:
+#        - cyso-backup-debian
+#        - cyso-basicmail
+#        - cyso-denyhosts
+#        - cyso-editor
+#        - cyso-firewall
+#        - cyso-key
+#        - cyso-ntpd-endnode
+#        - cyso-ocsinventory-agent
+#        - cyso-sanity
+#        - cyso-server
+#        - cyso-supported-kernels-full
+#        - cyso-updates
+#        - haveged
+#        - munin-node-cyso
+#        - nagios-nrpe-server-cyso
+#
+#    - name: Open outbound port 8080
+#      shell: echo 'outgoing!tcp!8080!10.181.1.150' >> /etc/firewall/allow
+#
+#    - name: Open firewall for internal network
+#      copy:
+#        src: files/firewall_custom
+#        dest: /etc/firewall/custom
+#
+#    - name: Restart cyso-firewall
+#      service:
+#        name: cyso-firewall
+#        state: restarted
+#
+#    - name: Run ocsinventory-agent
+#      shell: ocsinventory-agent
+#
+#    - name: Set PasswordAuthentication to yes
+#      lineinfile:
+#        dest: /etc/ssh/sshd_config
+#        regexp: "PasswordAuthentication no"
+#        line: "PasswordAuthentication yes"
+#
+#    - name: Reload SSH
+#      service:
+#        state: reloaded
+#        name: ssh
+#
+#    - name: Disable cyso-firewall
+#      shell: sed -i 's/ENABLED="YES"/ENABLED="NO"/' /etc/firewall/config
+#
+#    - name: Stop cyso-firewall
+#      service:
+#        name: cyso-firewall
+#        state: stopped
+#
+    - name: Remove cloud-init network config
+      file:
+        dest: /etc/network/interfaces.d/50-cloud-init.cfg
+        state: absent
+
+    - name: Copy new config in place
+      copy:
+        src: files/ens3.cfg
+        dest: /etc/network/interfaces.d/ens3.cfg
+
+    - name: Update IP address in new network config
+      lineinfile:
+        dest: /etc/network/interfaces.d/ens3.cfg
+        regexp: "##ip_address##"
+        line: " address {{ ansible_all_ipv4_addresses[0] }}"
+
+    - name: Copy Resolvconf config in place
+      copy:
+        src: files/base
+        dest: /etc/resolvconf/resolv.conf.d/base
+
+    - name: Configure timezone
+      file:
+        dest: /etc/localtime
+        state: link
+        src: /usr/share/zoneinfo/Europe/Amsterdam
+
+    - command: dpkg-reconfigure -f noninteractive tzdata
+
