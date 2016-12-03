@@ -15,7 +15,7 @@
     os_vol_size: 40
     os_network: cysotest1
     os_key: openstack
-    os_hostname: retcon.autostatic.cyso.net
+    os_hostname: retcon.cyso.net
 
   tasks:
     - name: Create port
