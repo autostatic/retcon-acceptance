@@ -15,20 +15,24 @@
     os_vol_size: 40
     os_network: cysotest1
     os_key: openstack
-    os_hostname: retcon.cyso.net
+    os_hostname: retcon.autostatic.net
+    os_port: cyso-port70
+    os_ip: 172.16.172.70
+    os_security_groups: default
+    os_image: 7050c27f-14ba-4374-9703-e4d61938cde4
 
   tasks:
     - name: Create port
       os_port:
         network: "{{ os_network }}"
         fixed_ips:
-          - ip_address: "172.16.172.70"
-        name: "cyso-port70"
+          - ip_address: "{{ os_ip }}"
+        name: "{{ os_port }}"
 
     - name: Create volume
       os_volume:
         display_name: "{{ os_hostname }}"
-        image: 7050c27f-14ba-4374-9703-e4d61938cde4
+        image: "{{ os_image }}"
         state: present
         size: "{{ os_vol_size }}"
 
@@ -40,8 +44,8 @@
         timeout: 200
         flavor: "{{ os_flavor }}"
         nics:
-          - port-name: "cyso-port70"
-        security_groups: default
+          - port-name: "{{ os_port }}"
+        security_groups: "{{ os_security_groups }}"
         boot_volume: "{{ os_hostname }}"
         meta:
           hostname: "{{ os_hostname }}"
