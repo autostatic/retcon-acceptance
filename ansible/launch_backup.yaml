@@ -1,0 +1,51 @@
+# Ansible playbook to launch a Retcon backup instance.
+# Bear in mind that you need the Python shade plugin
+# and a recent version of Ansible.
+# Install it in a virtualenv, i.e.:
+# virtualenv ansible && source ansible/bin/activate && \
+# pip install --upgrade pip setuptools && \
+# pip install ansible shade
+
+- name: Launch Retcon backup instance
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    os_flavor: c1.small
+    os_vol_size: 40
+    os_network: cysotest1
+    os_key: openstack
+    os_hostname: backup1.autostatic.net
+    os_port: cyso-port71
+    os_ip: 172.16.172.71
+    os_security_groups: default
+    os_image: 7050c27f-14ba-4374-9703-e4d61938cde4
+
+  tasks:
+    - name: Create port
+      os_port:
+        network: "{{ os_network }}"
+        fixed_ips:
+          - ip_address: "{{ os_ip }}"
+        name: "{{ os_port }}"
+
+    - name: Create volume
+      os_volume:
+        display_name: "{{ os_hostname }}"
+        image: "{{ os_image }}"
+        state: present
+        size: "{{ os_vol_size }}"
+
+    - name: Launch instance
+      os_server:
+        state: present
+        name: "{{ os_hostname }}"
+        key_name: "{{ os_key }}"
+        timeout: 200
+        flavor: "{{ os_flavor }}"
+        nics:
+          - port-name: "{{ os_port }}"
+        security_groups: "{{ os_security_groups }}"
+        boot_volume: "{{ os_hostname }}"
+        meta:
+          hostname: "{{ os_hostname }}"
